@@ -1,83 +1,23 @@
 import React from 'react';
 import './App.css';
+import ForceGraph2D from 'react-force-graph-2d';
+import { withSize } from 'react-sizeme';
 
-class Graph extends React.Component<any, any> {
-  constructor(props : any) {
-    super(props);
-    this.state = {
-      vertices: [{x: 50, y: 20, name: "test vertex"}],
-      selected: null,
-      mouse: null,
-    }
-  }
-
-  addVertex(name : string) {
-    const vertices = this.state.vertices.slice();
-    vertices.push({x: 100, y: 50, name : name});
-    this.setState({vertices : vertices});
-  }
-
-  onVertexMouseDown(event: MouseEvent, index : number) {
-    const touchState = {
-      vertex : index,
-      startX : event.clientX,
-      startY : event.clientY,
-    }
-    this.setState({selected : touchState})
-  }
-
-  onVertexMouseUp() {
-    const vertices = this.state.vertices.slice();
-    const vertex = vertices[this.state.selected.vertex];
-    vertex.x += this.state.mouse.x - this.state.selected.startX;
-    vertex.y += this.state.mouse.y - this.state.selected.startY;
-    this.setState({selected : null, vertices : vertices})
-  }
-
-  onMouseMove(event: any) {
-    this.setState({mouse : {x : event.clientX, y : event.clientY}});
-  }
-
+class SizeTest extends React.Component<any, any> {
   render() {
-    const vertices = this.state.vertices.map((v : any, index : number) => {
-      let x = v.x;
-      let y = v.y;
-      if (this.state.selected && this.state.mouse && this.state.selected.vertex === index) {
-        x += this.state.mouse.x - this.state.selected.startX;
-        y += this.state.mouse.y - this.state.selected.startY;
-      } 
-      return (
-        <Vertex x={x} y={y} key={index} 
-          onMouseDown={(event : MouseEvent) => this.onVertexMouseDown(event, index)}
-          onMouseUp={() => this.onVertexMouseUp()}/>
-      )
-    });
-
+    console.log(this.props.size);
     return (
-      <div className="graph" onMouseMove={(event : any) => this.onMouseMove(event)}>
-        <svg>
-          {vertices}
-        </svg>
-      </div>
+      <ForceGraph2D 
+        width={this.props.size.width} 
+        height={this.props.size.height} 
+        graphData={{nodes: this.props.vertices, links: []}}
+        backgroundColor="black"
+      />
     )
   }
 }
 
-function Vertex(props : any) {
-  return (
-    <rect 
-      x={props.x} 
-      y={props.y}
-      onMouseDown={props.onMouseDown}
-      onMouseUp={props.onMouseUp}
-      width="150" 
-      height="100" 
-      fill="white" 
-      stroke="black" 
-      strokeWidth="3" 
-    />
-  )
-}
+const SizeTestC = withSize({monitorHeight : true })(SizeTest);
 
 class App extends React.Component<{}, any> {
 
@@ -95,10 +35,13 @@ class App extends React.Component<{}, any> {
     this.setState({vertices: vertices, id: this.state.id + 1});
   }
 
+
   render() {
     return (
       <div className="App">
-        <Graph vertices={this.state.vertices}/>
+        <div className="graph">
+          <SizeTestC vertices={this.state.vertices} />
+        </div>
         <div className="console"> 
           Console goes here.
         </div>
