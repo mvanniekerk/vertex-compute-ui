@@ -11,51 +11,53 @@ class Graph extends React.Component<any, any> {
   }
 
   onSelectVertex(event: MouseEvent, index : number) {
+    const vertex = this.props.vertices[index];
     const touchState = {
       vertex : index,
-      startX : event.clientX,
-      startY : event.clientY,
+      startX : event.clientX - vertex.x,
+      startY : event.clientY - vertex.y,
     }
     this.setState({selected : touchState})
   }
 
   onDeselectVertex() {
-    const vertices = this.props.vertices.slice();
-    const vertex = vertices[this.state.selected.vertex];
-    vertex.x += this.state.mouse.x - this.state.selected.startX;
-    vertex.y += this.state.mouse.y - this.state.selected.startY;
     this.setState({selected : null});
-    this.props.move(vertices);
   }
 
   onMouseMove(event: any) {
-    this.setState({mouse : {x : event.clientX, y : event.clientY}});
+    if (this.state.selected) {
+      const vertices = this.props.vertices.slice();
+      const vertex = vertices[this.state.selected.vertex];
+      vertex.x = event.clientX - this.state.selected.startX;
+      vertex.y = event.clientY - this.state.selected.startY;
+      this.props.move(vertices);
+    }
   }
 
   render() {
     const vertices = this.props.vertices.map((v : any) => {
-      const index = v.id;
+      const ind = v.id;
       let x = v.x;
       let y = v.y;
-      if (this.state.selected && this.state.mouse && this.state.selected.vertex === index) {
-        x += this.state.mouse.x - this.state.selected.startX;
-        y += this.state.mouse.y - this.state.selected.startY;
-      } 
       return (
-        <Vertex x={x} y={y} key={index} name={v.name}
-          onMouseDown={(event : MouseEvent) => this.onSelectVertex(event, index)}
+        <Vertex x={x} y={y} key={ind} name={v.name}
+          onMouseDown={(event : MouseEvent) => this.onSelectVertex(event, ind)}
           onMouseUp={() => this.onDeselectVertex()}/>
       )
     });
 
     return (
-      <div className="graph" onMouseMove={(event : any) => this.onMouseMove(event)}>
+      <div className="graph" onMouseMove={(event : any) => this.onMouseMove(event)} onMouseLeave={() => this.onDeselectVertex()}>
         <svg>
           {vertices}
         </svg>
       </div>
     )
   }
+}
+
+function Edge(props : any) {
+
 }
 
 function Vertex(props : any) {
