@@ -5,19 +5,12 @@ class Graph extends React.Component<any, any> {
   constructor(props : any) {
     super(props);
     this.state = {
-      vertices: [{x: 50, y: 20, name: "test vertex"}],
       selected: null,
       mouse: null,
     }
   }
 
-  addVertex(name : string) {
-    const vertices = this.state.vertices.slice();
-    vertices.push({x: 100, y: 50, name : name});
-    this.setState({vertices : vertices});
-  }
-
-  onVertexMouseDown(event: MouseEvent, index : number) {
+  onSelectVertex(event: MouseEvent, index : number) {
     const touchState = {
       vertex : index,
       startX : event.clientX,
@@ -26,12 +19,13 @@ class Graph extends React.Component<any, any> {
     this.setState({selected : touchState})
   }
 
-  onVertexMouseUp() {
-    const vertices = this.state.vertices.slice();
+  onDeselectVertex() {
+    const vertices = this.props.vertices.slice();
     const vertex = vertices[this.state.selected.vertex];
     vertex.x += this.state.mouse.x - this.state.selected.startX;
     vertex.y += this.state.mouse.y - this.state.selected.startY;
-    this.setState({selected : null, vertices : vertices})
+    this.setState({selected : null});
+    this.props.move(vertices);
   }
 
   onMouseMove(event: any) {
@@ -39,7 +33,8 @@ class Graph extends React.Component<any, any> {
   }
 
   render() {
-    const vertices = this.state.vertices.map((v : any, index : number) => {
+    const vertices = this.props.vertices.map((v : any) => {
+      const index = v.id;
       let x = v.x;
       let y = v.y;
       if (this.state.selected && this.state.mouse && this.state.selected.vertex === index) {
@@ -47,9 +42,9 @@ class Graph extends React.Component<any, any> {
         y += this.state.mouse.y - this.state.selected.startY;
       } 
       return (
-        <Vertex x={x} y={y} key={index} 
-          onMouseDown={(event : MouseEvent) => this.onVertexMouseDown(event, index)}
-          onMouseUp={() => this.onVertexMouseUp()}/>
+        <Vertex x={x} y={y} key={index} name={v.name}
+          onMouseDown={(event : MouseEvent) => this.onSelectVertex(event, index)}
+          onMouseUp={() => this.onDeselectVertex()}/>
       )
     });
 
@@ -64,18 +59,24 @@ class Graph extends React.Component<any, any> {
 }
 
 function Vertex(props : any) {
+  const width = 150;
+  const height = 50;
   return (
-    <rect 
+    <g>
+      <rect 
       x={props.x} 
       y={props.y}
       onMouseDown={props.onMouseDown}
       onMouseUp={props.onMouseUp}
-      width="150" 
-      height="100" 
+      width={width}
+      height={height} 
       fill="white" 
       stroke="black" 
       strokeWidth="3" 
-    />
+      />
+      <text x={props.x + width/2} y={props.y + height/2} dominant-baseline="middle" text-anchor="middle" fill="black" fontSize="18">
+          {props.name}</text>
+    </g>
   )
 }
 
@@ -91,14 +92,14 @@ class App extends React.Component<{}, any> {
 
   addVertex() {
     const vertices = this.state.vertices.slice();
-    vertices.push({id : this.state.id, name : "New Vertex"});
+    vertices.push({id : this.state.id, name : "New Vertex", x : 100, y : 100});
     this.setState({vertices: vertices, id: this.state.id + 1});
   }
 
   render() {
     return (
       <div className="App">
-        <Graph vertices={this.state.vertices}/>
+        <Graph vertices={this.state.vertices} move={(vertices : any) => this.setState({ vertices : vertices })}/>
         <div className="console"> 
           Console goes here.
         </div>
