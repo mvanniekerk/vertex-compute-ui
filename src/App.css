@@ -17,10 +17,24 @@
   grid-area: Infobar;
   display: grid;
   grid-template-rows: 90% 10%;
+  border-left: 3px solid black;
+}
+
+.title {
+  border-bottom: 3px double black;
+  font-size: 24px;
+  padding: 10px 10px 5px 15px;
+  font-weight: bold;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.vertex-info {
+  padding: 5px;
 }
 
 .console {
   grid-area: Console;
+  border-top: 3px solid black;
 }
 
 #new-vertex {

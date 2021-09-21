@@ -21,8 +21,8 @@ class Graph extends React.Component<any, any> {
     this.setState({selected : touchState})
   }
 
-  static isWithinArea(circle : {cx : number, cy : number, r : number}, point : {x : number, y : number}) {
-    return (circle.cx - point.x) ** 2 + (circle.cy - point.y) ** 2 <= circle.r ** 2;
+  static isWithinArea({cx, cy, r} : {cx : number, cy : number, r : number}, {x, y} : {x : number, y : number}) {
+    return (cx - x) ** 2 + (cy - y) ** 2 <= r ** 2;
   }
 
   onDeselect() {
@@ -41,7 +41,7 @@ class Graph extends React.Component<any, any> {
         }
       }
     }
-    this.setState({selected : null, mouse : null, edgeSelected : null });
+    this.setState({selected : null, edgeSelected : null });
   }
 
   onSelectVertexEndpoint(index : number, side : "in" | "out") {
@@ -64,8 +64,10 @@ class Graph extends React.Component<any, any> {
       const ind = vertex.id;
       let x = vertex.x;
       let y = vertex.y;
+      const highlight = ind === this.props.clickedVertex;
       return (
-        <Vertex x={x} y={y} key={ind} name={vertex.name}
+        <Vertex x={x} y={y} key={ind} name={vertex.name} highlight={highlight}
+          onClick={() => this.props.onVertexSelect(ind)}
           onSelectVertex={(event : MouseEvent) => this.onSelectVertex(event, ind)}
           onDeselectVertex={() => this.onDeselect()}
           onSelectVertexEndpoint={(side : "in" | "out") => this.onSelectVertexEndpoint(ind, side)}/>
@@ -142,12 +144,13 @@ class Vertex extends React.Component<any, any> {
         <rect 
         x={this.props.x} 
         y={this.props.y}
+        onClick={this.props.onClick}
         onMouseDown={this.props.onSelectVertex}
         onMouseUp={this.props.onDeselectVertex}
         width={Vertex.width}
         height={Vertex.height} 
         fill={Vertex.background} 
-        stroke={Vertex.foreground} 
+        stroke={this.props.highlight ? Vertex.highlight : Vertex.foreground} 
         strokeWidth={Vertex.strokeWidth}
         />
         <text 
@@ -183,6 +186,32 @@ class Vertex extends React.Component<any, any> {
   }
 }
 
+class InfoBar extends React.Component<any, any> {
+
+  constructor(props : any) {
+    super(props);
+    this.state = {
+
+    }
+  }
+
+  render() {
+    const vertex = this.props.vertex
+    if (vertex) {
+      return <div className="vertex-info">
+        <div className="name">
+          <label>name:</label>
+          <p>{vertex.name}</p>
+        </div>
+        
+      </div>
+    }
+    return <div className="vertex-info">
+      <p>Select a Vertex</p>
+    </div>
+  }
+}
+
 class App extends React.Component<{}, any> {
 
   constructor(props: {}) {
@@ -190,6 +219,7 @@ class App extends React.Component<{}, any> {
     this.state = {
       vertices: [],
       edges: [],
+      selectedVertex: null,
       id : 0,
       eid : 0,
     };
@@ -207,6 +237,8 @@ class App extends React.Component<{}, any> {
         <Graph 
           vertices={this.state.vertices} 
           edges={this.state.edges}
+          onVertexSelect={(id : number) => this.setState({ selectedVertex : id })}
+          clickedVertex={this.state.selectedVertex}
           move={(vertices : any) => this.setState({ vertices : vertices })}
           addEdge={({ from, to } : { from : number, to : number }) => {
             const edges = this.state.edges.slice();
@@ -218,7 +250,12 @@ class App extends React.Component<{}, any> {
           Console goes here.
         </div>
         <div className="infobar">
-          <div className="vertex-info">Vertex Info</div>
+          <div>
+            <div className="title">
+              <h2>Vertex Info</h2>
+            </div>
+            <InfoBar vertex={this.state.vertices[this.state.selectedVertex]} />
+          </div>
           <div className="new-vertex">
             <button id="new-vertex" onClick={() => this.addVertex()}>New Vertex</button>
           </div>
