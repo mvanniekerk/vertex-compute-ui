@@ -1,6 +1,8 @@
 import React from 'react';
 import './App.css';
 
+const HOST = "http://localhost:8080";
+
 class Graph extends React.Component<any, any> {
   constructor(props : any) {
     super(props);
@@ -29,7 +31,7 @@ class Graph extends React.Component<any, any> {
     if (this.state.edgeSelected) {
       const side = this.state.edgeSelected.side
       const otherSide = side === "in" ? "out" : "in";
-      for (let i = 0; i < this.props.vertices.length; i++) {
+      for (const i of Object.keys(this.props.vertices)) {
         const v2 = this.props.vertices[i];
         const v2Edge = Vertex.getEdgePosition(v2, otherSide);
         if (Graph.isWithinArea(v2Edge, this.state.mouse) && i !== this.state.edgeSelected.index) {
@@ -51,7 +53,7 @@ class Graph extends React.Component<any, any> {
   onMouseMove(event: any) {
     this.setState({ mouse : { x: event.clientX, y: event.clientY }});
     if (this.state.selected) {
-      const vertices = this.props.vertices.slice();
+      const vertices = {...this.props.vertices};
       const vertex = vertices[this.state.selected.vertex];
       vertex.x = event.clientX - this.state.selected.startX;
       vertex.y = event.clientY - this.state.selected.startY;
@@ -60,7 +62,7 @@ class Graph extends React.Component<any, any> {
   }
 
   render() {
-    const vertices = this.props.vertices.map((vertex : any) => {
+    const vertices = Object.values(this.props.vertices).map((vertex : any) => {
       const ind = vertex.id;
       let x = vertex.x;
       let y = vertex.y;
@@ -74,7 +76,7 @@ class Graph extends React.Component<any, any> {
       )
     });
 
-    const edges : React.ReactElement[] = this.props.edges.map(({from, to, id} : { from : number, to : number, id : number }) => {
+    const edges : React.ReactElement[] = Object.values(this.props.edges).map(({from, to, id} : any) => {
       const p1 = Vertex.getEdgePosition(this.props.vertices[from], "out");
       const p2 = Vertex.getEdgePosition(this.props.vertices[to], "in");
       return <Edge key={id} xin={p1.cx} yin={p1.cy} xout={p2.cx} yout={p2.cy} />; 
@@ -217,18 +219,46 @@ class App extends React.Component<{}, any> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      vertices: [],
+      vertices: {},
       edges: [],
-      selectedVertex: null,
-      id : 0,
-      eid : 0,
+      selectedVertex: null
     };
   }
 
   addVertex() {
-    const vertices = this.state.vertices.slice();
-    vertices.push({id : this.state.id, name : "New Vertex", x : 100, y : 100});
-    this.setState({vertices: vertices, id: this.state.id + 1});
+    const name = "New Vertex";
+    fetch(HOST + "/createvertex", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({name : name}),
+    })
+    .then(response => response.json())
+    .then(body => {
+      if (body.id) {
+        const vertices = {...this.state.vertices};
+        vertices[body.id] = {id : body.id, name : "New Vertex", x : 100, y : 100};
+        this.setState({vertices: vertices});
+      }
+    })
+  }
+  
+  addEdge({ from, to } : { from : number, to : number }) {
+    console.log("add edge " + from + " to " + to);
+    fetch(HOST + "/link", {
+      method : "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({source : from, target : to})
+    })
+    .then(response => response.json())
+    .then(body => {
+      const edges = {...this.state.edges};
+      edges[body.id] = { from : from, to : to, id: body.id };
+      this.setState({ edges : edges});
+    })
   }
 
   render() {
@@ -240,11 +270,7 @@ class App extends React.Component<{}, any> {
           onVertexSelect={(id : number) => this.setState({ selectedVertex : id })}
           clickedVertex={this.state.selectedVertex}
           move={(vertices : any) => this.setState({ vertices : vertices })}
-          addEdge={({ from, to } : { from : number, to : number }) => {
-            const edges = this.state.edges.slice();
-            edges.push({ from : from, to : to, id: this.state.eid });
-            this.setState({ edges : edges, eid : this.state.eid + 1 });
-          }}
+          addEdge={(edge : any) => this.addEdge(edge)}
         />
         <div className="console"> 
           Console goes here.
