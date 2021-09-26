@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ChangeEvent, FormEvent } from 'react';
 import './App.css';
 
 const HOST = "http://localhost:8080";
@@ -188,12 +188,58 @@ class Vertex extends React.Component<any, any> {
   }
 }
 
+class InfoField extends React.Component<any, any> {
+  constructor(props : any) {
+    super(props);
+    this.state = {
+      value : '',
+      editing: false,
+    }
+  }
+
+  handleChange(event : ChangeEvent<HTMLInputElement>) {
+    this.setState({value: event.target.value});
+  }
+
+  handleSubmit(event : FormEvent<HTMLFormElement>) {
+    this.props.onChange(this.state.value);
+    this.setState({editing : false, value : ''});
+    event.preventDefault();
+  }
+
+  handleEdit() {
+    this.setState({editing : true});
+  }
+
+  render() {
+    if (this.state.editing) {
+      return (
+        <form className="info-field" onSubmit={event => this.handleSubmit(event)}>
+          <label>{this.props.field}</label>
+          <input autoFocus className="content" type="text" value={this.state.value} onChange={event => this.handleChange(event)}></input>
+          <button className="edit">submit</button>
+        </form>
+      )
+    } else {
+      return (
+        <div className="info-field">
+          <label>{this.props.field}</label>
+          <p className="content">{this.props.content}</p>
+          <button className="edit" onClick={() => this.handleEdit()}>edit</button>
+        </div>
+      )
+    }
+  }
+
+}
+
 class InfoBar extends React.Component<any, any> {
 
   constructor(props : any) {
     super(props);
     this.state = {
-
+      editName : false,
+      editCode : false,
     }
   }
 
@@ -201,11 +247,12 @@ class InfoBar extends React.Component<any, any> {
     const vertex = this.props.vertex
     if (vertex) {
       return <div className="vertex-info">
-        <div className="name">
-          <label>name:</label>
-          <p>{vertex.name}</p>
+        <div className="info-field">
+          <label>id</label>
+          <p className="content edit">{vertex.id}</p>
         </div>
-        
+        <InfoField field="name" content={vertex.name} onChange={(name : string) => this.props.changeName(name)}/>
+        <InfoField field="code" content={vertex.code} onChange={(code : string) => this.props.changeCode(code)}/>
       </div>
     }
     return <div className="vertex-info">
@@ -227,25 +274,26 @@ class App extends React.Component<{}, any> {
 
   addVertex() {
     const name = "New Vertex";
+    const code = "noop";
     fetch(HOST + "/createvertex", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({name : name}),
+      body: JSON.stringify({name : name, code : code}),
     })
     .then(response => response.json())
     .then(body => {
-      if (body.id) {
+      const description = body.description;
+      if (description.id) {
         const vertices = {...this.state.vertices};
-        vertices[body.id] = {id : body.id, name : "New Vertex", x : 100, y : 100};
+        vertices[description.id] = {id : description.id, name : description.name, code : description.code, x : 100, y : 100};
         this.setState({vertices: vertices});
       }
     })
   }
   
   addEdge({ from, to } : { from : number, to : number }) {
-    console.log("add edge " + from + " to " + to);
     fetch(HOST + "/link", {
       method : "POST",
       headers: {
@@ -258,6 +306,29 @@ class App extends React.Component<{}, any> {
       const edges = {...this.state.edges};
       edges[body.id] = { from : from, to : to, id: body.id };
       this.setState({ edges : edges});
+    })
+  }
+
+  changeName(newName : string) {
+    const id = this.state.selectedVertex;
+    console.log("changing name for " + id + " to " + newName);
+  }
+
+  changeCode(newCode : string) {
+    const id = this.state.selectedVertex;
+    fetch(HOST + "/code/" + id, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({code : newCode})
+    })
+    .then(response => response.json())
+    .then(body => {
+      const description = body.description;
+      const vertices = {...this.state.vertices};
+      vertices[description.id].code = description.code;
+      this.setState({ vertices : vertices })
     })
   }
 
@@ -280,7 +351,10 @@ class App extends React.Component<{}, any> {
             <div className="title">
               <h2>Vertex Info</h2>
             </div>
-            <InfoBar vertex={this.state.vertices[this.state.selectedVertex]} />
+            <InfoBar 
+              vertex={this.state.vertices[this.state.selectedVertex]} 
+              changeName={(newName : string) => this.changeName(newName)} 
+              changeCode={(newCode : string) => this.changeCode(newCode)} />
           </div>
           <div className="new-vertex">
             <button id="new-vertex" onClick={() => this.addVertex()}>New Vertex</button>

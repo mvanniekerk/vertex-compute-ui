@@ -32,6 +32,35 @@
   padding: 5px;
 }
 
+.info-field {
+  font-size: 14px;
+  display: grid;
+  grid-template-columns: 85% 15%;
+  grid-template-areas:
+  "title title"
+  "content button"
+}
+
+.info-field > label {
+  font-weight: bold;
+  grid-area: title;
+  background-color: #9da3ad;
+}
+
+.info-field > .content {
+  grid-area: content;
+  background-color: #e4e5e8;
+}
+
+.info-field > button {
+  grid-area: button;
+  padding: 0;
+  background: #e4e5e8;
+  border: 1px solid black;
+  cursor: pointer;
+
+}
+
 .console {
   grid-area: Console;
   border-top: 3px solid black;
