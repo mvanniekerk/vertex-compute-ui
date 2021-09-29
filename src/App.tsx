@@ -63,16 +63,16 @@ class Graph extends React.Component<any, any> {
 
   render() {
     const vertices = Object.values(this.props.vertices).map((vertex : any) => {
-      const ind = vertex.id;
+      const id = vertex.id;
       let x = vertex.x;
       let y = vertex.y;
-      const highlight = ind === this.props.clickedVertex;
+      const highlight = id === this.props.clickedVertex;
       return (
-        <Vertex x={x} y={y} key={ind} name={vertex.name} highlight={highlight}
-          onClick={() => this.props.onVertexSelect(ind)}
-          onSelectVertex={(event : MouseEvent) => this.onSelectVertex(event, ind)}
+        <Vertex x={x} y={y} key={id} name={vertex.name} highlight={highlight}
+          onClick={() => this.props.onVertexSelect(id)}
+          onSelectVertex={(event : MouseEvent) => this.onSelectVertex(event, id)}
           onDeselectVertex={() => this.onDeselect()}
-          onSelectVertexEndpoint={(side : "in" | "out") => this.onSelectVertexEndpoint(ind, side)}/>
+          onSelectVertexEndpoint={(side : "in" | "out") => this.onSelectVertexEndpoint(id, side)}/>
       )
     });
 
@@ -261,20 +261,77 @@ class InfoBar extends React.Component<any, any> {
   }
 }
 
+class Console extends React.Component<any, {}> {
+
+  private messagesEnd : HTMLElement | null = null;
+
+  scrollToBottom = () => {
+    this.messagesEnd?.scrollIntoView({ behavior: "auto" });
+  }
+  
+  componentDidMount() {
+    this.scrollToBottom();
+  }
+  
+  componentDidUpdate() {
+    this.scrollToBottom();
+  }
+
+  render() {
+    const lines = this.props.log
+      .map((line:any) => <ConsoleLine key={line.timestamp} timestamp={line.timestamp} message={line.message}/>)
+    return (
+      <div>
+        <div className="logLines">
+          {lines}
+        </div>
+        <div style={{ float:"left", clear: "both" }}
+               ref={(el) => { this.messagesEnd = el; }}>
+        </div>
+      </div>
+    );
+  }
+}
+
+function ConsoleLine({timestamp, message} : {timestamp : number, message : string}) {
+  const date = new Date(timestamp * 1e3);
+  const timeString = date.toISOString();
+
+  return (
+    <div className="consoleLine">
+      <span className="timestamp">{timeString}</span>
+      <span className="message">{message}</span>
+    </div>
+  )
+}
+
 class App extends React.Component<{}, any> {
+
+  private ws? : WebSocket = undefined;
 
   constructor(props: {}) {
     super(props);
     this.state = {
       vertices: {},
       edges: [],
-      selectedVertex: null
+      selectedVertex: null,
+      log: [],
+    };
+  }
+
+  componentDidMount() {
+    this.ws = new WebSocket("ws://localhost:8080/ws");
+    this.ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      const logMessages = this.state.log;
+      logMessages.push(msg);
+      this.setState({ log : logMessages });
     };
   }
 
   addVertex() {
     const name = "New Vertex";
-    const code = "noop";
+    const code = "NumberSource";
     fetch(HOST + "/createvertex", {
       method: "POST",
       headers: {
@@ -328,8 +385,13 @@ class App extends React.Component<{}, any> {
       const description = body.description;
       const vertices = {...this.state.vertices};
       vertices[description.id].code = description.code;
-      this.setState({ vertices : vertices })
+      this.setState({ vertices : vertices });
     })
+  }
+
+  selectVertex(id : string) {
+    this.setState({ selectedVertex : id, log : [] });
+    this.ws?.send(id);
   }
 
   render() {
@@ -338,13 +400,13 @@ class App extends React.Component<{}, any> {
         <Graph 
           vertices={this.state.vertices} 
           edges={this.state.edges}
-          onVertexSelect={(id : number) => this.setState({ selectedVertex : id })}
+          onVertexSelect={(id : string) => this.selectVertex(id)}
           clickedVertex={this.state.selectedVertex}
           move={(vertices : any) => this.setState({ vertices : vertices })}
           addEdge={(edge : any) => this.addEdge(edge)}
         />
         <div className="console"> 
-          Console goes here.
+          <Console log={this.state.log} />
         </div>
         <div className="infobar">
           <div>

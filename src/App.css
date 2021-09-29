@@ -64,6 +64,16 @@
 .console {
   grid-area: Console;
   border-top: 3px solid black;
+  overflow: scroll;
+}
+
+.logLines {
+  margin-left: 10px;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.timestamp {
+  margin-right: 40px;
 }
 
 #new-vertex {
