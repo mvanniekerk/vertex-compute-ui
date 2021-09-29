@@ -261,12 +261,22 @@ class InfoBar extends React.Component<any, any> {
   }
 }
 
-class Console extends React.Component<any, {}> {
+class Console extends React.Component<any, any> {
 
   private messagesEnd : HTMLElement | null = null;
 
-  scrollToBottom = () => {
-    this.messagesEnd?.scrollIntoView({ behavior: "auto" });
+  constructor(props : any) {
+    super(props);
+    this.state = {
+      userScroll: false,
+    }
+  }
+
+  scrollToBottom() {
+    if (this.state.userScroll) {
+      return;
+    }
+    this.messagesEnd?.scrollIntoView();
   }
   
   componentDidMount() {
@@ -277,11 +287,20 @@ class Console extends React.Component<any, {}> {
     this.scrollToBottom();
   }
 
+  onScroll(e : any) {
+    const bottom = e.target.scrollHeight - e.target.scrollTop === e.target.clientHeight;
+    if (bottom) {
+      this.setState({ userScroll : false })
+    } else {
+      this.setState({ userScroll : true })
+    }
+  }
+
   render() {
     const lines = this.props.log
       .map((line:any) => <ConsoleLine key={line.timestamp} timestamp={line.timestamp} message={line.message}/>)
     return (
-      <div>
+      <div className="consoleWindow" onScroll={scrollEvent => this.onScroll(scrollEvent)}>
         <div className="logLines">
           {lines}
         </div>
@@ -385,7 +404,7 @@ class App extends React.Component<{}, any> {
       const description = body.description;
       const vertices = {...this.state.vertices};
       vertices[description.id].code = description.code;
-      this.setState({ vertices : vertices });
+      this.setState({ vertices : vertices, log : [] });
     })
   }
 
