@@ -118,7 +118,7 @@ function Edge(props : any) {
 }
 
 class Vertex extends React.Component<any, any> {
-  static width = 150;
+  static width = 160;
   static height = 50;
   static background = "white";
   static foreground = "black";
@@ -162,6 +162,7 @@ class Vertex extends React.Component<any, any> {
         textAnchor="middle" 
         fill={Vertex.foreground} 
         fontSize="18"
+        width={Vertex.width - Vertex.height}
         fontFamily="source-code-pro, Menlo, Monaco, Consolas">
           {this.props.name}
         </text>
@@ -349,14 +350,13 @@ class App extends React.Component<{}, any> {
   }
 
   addVertex() {
-    const name = "New Vertex";
     const code = "NumberSource";
     fetch(HOST + "/createvertex", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({name : name, code : code}),
+      body: JSON.stringify({name : null, code : code}),
     })
     .then(response => response.json())
     .then(body => {
