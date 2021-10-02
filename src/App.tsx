@@ -347,6 +347,11 @@ class App extends React.Component<{}, any> {
       logMessages.push(msg);
       this.setState({ log : logMessages });
     };
+    fetch(HOST + "/state")
+      .then(response => response.json())
+      .then(body => {
+        console.log(body);
+      })
   }
 
   addVertex() {
@@ -363,7 +368,7 @@ class App extends React.Component<{}, any> {
       const description = body.description;
       if (description.id) {
         const vertices = {...this.state.vertices};
-        vertices[description.id] = {id : description.id, name : description.name, code : description.code, x : 100, y : 100};
+        vertices[description.id] = {...description, x : 100, y : 100};
         this.setState({vertices: vertices});
       }
     })
@@ -387,7 +392,19 @@ class App extends React.Component<{}, any> {
 
   changeName(newName : string) {
     const id = this.state.selectedVertex;
-    console.log("changing name for " + id + " to " + newName);
+    fetch(HOST + "/name/" + id, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({name : newName})
+    }).then(response => response.json())
+    .then(vertex => {
+      const vertices = {...this.state.vertices};
+      const old = vertices[vertex.id];
+      vertices[vertex.id] = {...old, ...vertex};
+      this.setState({vertices : vertices});
+    })
   }
 
   changeCode(newCode : string) {
@@ -400,15 +417,18 @@ class App extends React.Component<{}, any> {
       body: JSON.stringify({code : newCode})
     })
     .then(response => response.json())
-    .then(body => {
-      const description = body.description;
+    .then(vertex => {
       const vertices = {...this.state.vertices};
-      vertices[description.id].code = description.code;
-      this.setState({ vertices : vertices, log : [] });
+      const old = vertices[vertex.id];
+      vertices[vertex.id] = {...old, ...vertex};
+      this.setState({vertices : vertices, log : []});
     })
   }
 
   selectVertex(id : string) {
+    if (this.state.selectedVertex && (this.state.selectedVertex === id)) {
+      return;
+    }
     this.setState({ selectedVertex : id, log : [] });
     this.ws?.send(id);
   }
