@@ -350,7 +350,11 @@ class App extends React.Component<{}, any> {
     fetch(HOST + "/state")
       .then(response => response.json())
       .then(body => {
-        console.log(body);
+        const vertices : any = {};
+        for (const vertex of body.vertices) {
+          vertices[vertex.id] = {...vertex, x : 100, y : 100};
+        }
+        this.setState({vertices : vertices, edges : body.edges});
       })
   }
 
