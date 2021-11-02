@@ -30,9 +30,14 @@ class App extends React.Component<{}, State> {
     this.ws = new WebSocket("ws://localhost:8080/ws");
     this.ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      const logMessages = this.state.log;
-      logMessages.push(msg);
-      this.setState({ log: logMessages });
+      if (msg.type === "log") {
+        const logMessage = msg.content;
+        const logMessages = this.state.log;
+        logMessages.push(logMessage);
+        this.setState({ log: logMessages });
+      } else if (msg.type === "metrics") {
+        console.log(msg.content);
+      }
     };
     fetch(HOST + "/state")
       .then(response => response.json())

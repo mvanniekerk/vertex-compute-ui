@@ -2,16 +2,16 @@ import React from 'react';
 import { Graph, Vertices } from './Types';
 
 type GraphProps = Graph & {
-  addEdge : (from : string, to : string) => void,
-  move : (vertices : Vertices) => void,
-  onVertexSelect : (vertexId : string) => void,
-  clickedVertex : string | undefined,
+  addEdge: (from: string, to: string) => void,
+  move: (vertices: Vertices) => void,
+  onVertexSelect: (vertexId: string) => void,
+  clickedVertex: string | undefined,
 }
 
 type GraphState = {
-  selected : { vertex : string, startX : number, startY : number } | undefined,
-  mouse : {x : number, y : number} | undefined,
-  edgeSelected : { index : string, side : "in" | "out" } | undefined,
+  selected: { vertex: string, startX: number, startY: number } | undefined,
+  mouse: { x: number, y: number } | undefined,
+  edgeSelected: { index: string, side: "in" | "out" } | undefined,
 }
 
 export class GraphView extends React.Component<GraphProps, GraphState> {
@@ -72,7 +72,7 @@ export class GraphView extends React.Component<GraphProps, GraphState> {
     }
   }
 
-  getVertex(id : string) {
+  getVertex(id: string) {
     const vertex = this.props.vertices[id];
     if (!vertex) {
       throw new Error(`Id ${id} is not a vertex in ${this.props.vertices}`);
@@ -128,11 +128,28 @@ export class GraphView extends React.Component<GraphProps, GraphState> {
 }
 
 function EdgeView(props: any) {
+  const radius = 5;
+  const duration = 2;
+  const numCircles = 2;
+
+  const circles = [];
+  for (let i = 0; i < numCircles; i++) {
+    const circle = (
+      <circle r={radius} fill="red">
+        <animate attributeName="cx" values={props.xin + ";" + props.xout} dur={duration} begin={duration / numCircles * i} repeatCount="indefinite" />
+        <animate attributeName="cy" values={props.yin + ";" + props.yout} dur={duration} begin={duration / numCircles * i} repeatCount="indefinite" />
+      </circle>
+    )
+    circles.push(circle);
+  }
   return (
-    <line x1={props.xin} y1={props.yin} x2={props.xout} y2={props.yout}
-      stroke="black"
-      strokeWidth="3"
-    />
+    <g>
+      <line x1={props.xin} y1={props.yin} x2={props.xout} y2={props.yout}
+        stroke="black"
+        strokeWidth="3"
+      />
+      {circles}
+    </g>
   )
 }
 
