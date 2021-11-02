@@ -8,8 +8,8 @@ import { Graph, LogMessage } from './Types';
 const HOST = "http://localhost:8080";
 
 type State = Graph & {
-  selectedVertex : string | undefined,
-  log : LogMessage[],
+  selectedVertex: string | undefined,
+  log: LogMessage[],
 }
 
 class App extends React.Component<{}, State> {
@@ -36,7 +36,7 @@ class App extends React.Component<{}, State> {
         logMessages.push(logMessage);
         this.setState({ log: logMessages });
       } else if (msg.type === "metrics") {
-        console.log(msg.content);
+        // console.log(msg.content);
       }
     };
     fetch(HOST + "/state")
@@ -48,6 +48,42 @@ class App extends React.Component<{}, State> {
         }
         this.setState({ vertices: vertices, edges: body.edges });
       })
+  }
+
+  save() {
+    fetch(HOST + "/state")
+      .then(response => response.text())
+      .then(body => {
+        const element = document.createElement("a");
+        const file = new Blob([body], { type: 'text/plain' });
+        element.href = URL.createObjectURL(file);
+        element.download = "graph.json";
+        document.body.appendChild(element); // Required for this to work in FireFox
+        element.click();
+      })
+  }
+
+  load(event: any) {
+    const file: File = event.target.files[0];
+    const fr = new FileReader();
+    fr.onload = (evt: any) => {
+      fetch(HOST + "/load", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: evt.target.result,
+      })
+        .then(response => response.json())
+        .then(body => {
+          const vertices: any = {};
+          for (const vertex of body.vertices) {
+            vertices[vertex.id] = { ...vertex, x: 100, y: 100 };
+          }
+          this.setState({ vertices: vertices, edges: body.edges });
+        })
+    }
+    fr.readAsText(file);
   }
 
   addVertex() {
@@ -129,7 +165,7 @@ class App extends React.Component<{}, State> {
     this.ws?.send(id);
   }
 
-  getVertex(id : string | undefined) {
+  getVertex(id: string | undefined) {
     if (!id) {
       return;
     }
@@ -161,6 +197,8 @@ class App extends React.Component<{}, State> {
           </div>
           <div className="new-vertex">
             <button id="new-vertex" onClick={() => this.addVertex()}>New Vertex</button>
+            <button id="safe" onClick={() => this.save()}>Save</button>
+            <input type="file" id="load" onChange={event => this.load(event)} />
           </div>
         </div>
       </div>
