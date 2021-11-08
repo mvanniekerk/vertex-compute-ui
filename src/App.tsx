@@ -42,6 +42,7 @@ class App extends React.Component<{}, State> {
     fetch(HOST + "/state")
       .then(response => response.json())
       .then(body => {
+        console.log(body);
         const vertices: any = {};
         for (const vertex of body.vertices) {
           vertices[vertex.id] = { ...vertex, x: 100, y: 100 };
@@ -173,6 +174,29 @@ class App extends React.Component<{}, State> {
     return this.state.vertices[id];
   }
 
+  delete() {
+    const id = this.state.selectedVertex;
+    if (!id) {
+      return;
+    }
+    const vertex = this.state.vertices[id];
+    fetch(HOST + "/stopvertex", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ id : id, name : vertex.name })
+    })
+      .then(response => {
+        if (response.ok) {
+          const vertices = {...this.state.vertices};
+          delete vertices[id];
+          const edges = this.state.edges.filter(edge => edge.from !== id && edge.to !== id);
+          this.setState({ vertices : vertices, edges : edges });
+        }
+      })
+  }
+
   format() {
     const vertices = this.state.vertices;
     const edges = Array.from(this.state.edges);
@@ -201,8 +225,6 @@ class App extends React.Component<{}, State> {
         }
       }
     }
-
-    console.log(result);
 
     const newVertices : Vertices = {};
     let x = 100;
@@ -247,6 +269,7 @@ class App extends React.Component<{}, State> {
             <button id="safe" onClick={() => this.save()}>Save</button>
             <input type="file" id="load" onChange={event => this.load(event)} />
             <button onClick={() => this.format()}>Format</button>
+            <button onClick={() => this.delete()}>Delete</button>
           </div>
         </div>
       </div>
