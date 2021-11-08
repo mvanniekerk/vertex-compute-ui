@@ -3,7 +3,7 @@ import React from 'react';
 import './App.css';
 import { GraphView } from './Graph';
 import { InfoBar } from './InfoBar';
-import { Graph, LogMessage } from './Types';
+import { Graph, LogMessage, Vertices, Vertex } from './Types';
 
 const HOST = "http://localhost:8080";
 
@@ -81,6 +81,7 @@ class App extends React.Component<{}, State> {
             vertices[vertex.id] = { ...vertex, x: 100, y: 100 };
           }
           this.setState({ vertices: vertices, edges: body.edges });
+          this.format();
         })
     }
     fr.readAsText(file);
@@ -172,6 +173,52 @@ class App extends React.Component<{}, State> {
     return this.state.vertices[id];
   }
 
+  format() {
+    const vertices = this.state.vertices;
+    const edges = Array.from(this.state.edges);
+    const result : Vertex[][] = [];
+
+    const vNames = Object.keys(vertices);
+    const noIncomingEdges = new Set(vNames);
+    for (const edge of edges) {
+      noIncomingEdges.delete(edge.to);
+    }
+
+    while (noIncomingEdges.size !== 0) {
+      const noIncomingArray = new Set(noIncomingEdges);
+      noIncomingEdges.clear();
+      result.push(Object.values(vertices).filter(vertex => noIncomingArray.has(vertex.id)));
+      for (const vertex of Array.from(noIncomingArray)) {
+        for (let i = edges.length - 1; i >= 0; i--) {
+          if (edges[i].from === vertex) {
+            const to = edges[i].to
+            edges.splice(i, 1);
+            const incoming = edges.filter(edge => to === edge.to);
+            if (incoming.length === 0) {
+              noIncomingEdges.add(to);
+            }
+          }
+        }
+      }
+    }
+
+    console.log(result);
+
+    const newVertices : Vertices = {};
+    let x = 100;
+    for (const column of result) {
+      column.sort((a, b) => a.name.localeCompare(b.name));
+      let y = 100;
+      for (const vertex of column) {
+        newVertices[vertex.id] = {...vertex, x, y};
+        y += 100;
+      }
+      x += 250;
+    }
+
+    this.setState({ vertices : newVertices });
+  }
+
   render() {
     return (
       <div className="App">
@@ -199,6 +246,7 @@ class App extends React.Component<{}, State> {
             <button id="new-vertex" onClick={() => this.addVertex()}>New Vertex</button>
             <button id="safe" onClick={() => this.save()}>Save</button>
             <input type="file" id="load" onChange={event => this.load(event)} />
+            <button onClick={() => this.format()}>Format</button>
           </div>
         </div>
       </div>
