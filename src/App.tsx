@@ -264,10 +264,10 @@ class App extends React.Component<{}, State> {
               changeName={(newName: string) => this.changeName(newName)}
               changeCode={(newCode: string) => this.changeCode(newCode)} />
           </div>
-          <div className="new-vertex">
-            <button id="new-vertex" onClick={() => this.addVertex()}>New Vertex</button>
+          <div className="control">
+            <button className="new-vertex" onClick={() => this.addVertex()}>New Vertex</button>
             <button id="safe" onClick={() => this.save()}>Save</button>
-            <input type="file" id="load" onChange={event => this.load(event)} />
+            <input type="file" id="load" onChange={event => this.load(event)} accept=".json" />
             <button onClick={() => this.format()}>Format</button>
             <button onClick={() => this.delete()}>Delete</button>
           </div>

@@ -16,7 +16,7 @@
 .infobar {
   grid-area: Infobar;
   display: grid;
-  grid-template-rows: 90% 10%;
+  grid-template-rows: 85% 15%;
   border-left: 3px solid black;
 }
 
@@ -58,7 +58,10 @@
   background: #e4e5e8;
   border: 1px solid black;
   cursor: pointer;
+}
 
+.info-field input {
+  border: 0;
 }
 
 .console {
@@ -80,42 +83,21 @@
   margin-right: 40px;
 }
 
-#new-vertex {
-  width: 80%;
-  height: 90%;
+.control {
+  display: grid;
+  grid-template-columns: 100%;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.control button {
+  margin: 1px;
+  border: 1px solid black;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.control button:hover {
+  background-color: #f39292;
+  cursor: pointer;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.new-vertex {
+  background-color: #88f188;
 }

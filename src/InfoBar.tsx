@@ -49,7 +49,7 @@ class InfoField extends React.Component<any, any> {
   }
 
   handleEdit() {
-    this.setState({ editing: true });
+    this.setState({ editing: true, value: this.props.content });
   }
 
   render() {
