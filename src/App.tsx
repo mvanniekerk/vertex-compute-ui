@@ -36,7 +36,15 @@ class App extends React.Component<{}, State> {
         logMessages.push(logMessage);
         this.setState({ log: logMessages });
       } else if (msg.type === "metrics") {
-        // console.log(msg.content);
+        const content : Record<string, {msgFreqPerSec : number}> = msg.content.metricsByVertexId;
+        const vertices = {...this.state.vertices};
+        for (const vertex in content) {
+          const mps = content[vertex].msgFreqPerSec;
+          if (vertex in vertices) {
+            vertices[vertex].mps = mps;
+          }
+        }
+        this.setState({ vertices : vertices });
       }
     };
     fetch(HOST + "/state")

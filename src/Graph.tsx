@@ -96,19 +96,20 @@ export class GraphView extends React.Component<GraphProps, GraphState> {
     });
 
     const edges: React.ReactElement[] = Object.values(this.props.edges).map(({ from, to, id }) => {
-      const p1 = VertexView.getEdgePosition(this.getVertex(from), "out");
+      const fromV = this.getVertex(from);
+      const p1 = VertexView.getEdgePosition(fromV, "out");
       const p2 = VertexView.getEdgePosition(this.getVertex(to), "in");
-      return <EdgeView key={id} xin={p1.cx} yin={p1.cy} xout={p2.cx} yout={p2.cy} />;
+      return <EdgeView key={id} xin={p1.cx} yin={p1.cy} xout={p2.cx} yout={p2.cy} mps={fromV.mps}/>;
     });
 
     if (this.state.edgeSelected && this.state.mouse) {
       const vertex = this.getVertex(this.state.edgeSelected.index);
       if (this.state.edgeSelected.side === "in") {
         const edgePosition = VertexView.getEdgePosition(vertex, "in");
-        edges.push(<EdgeView xin={this.state.mouse.x} yin={this.state.mouse.y} xout={edgePosition.cx} yout={edgePosition.cy} />)
+        edges.push(<EdgeView xin={this.state.mouse.x} yin={this.state.mouse.y} xout={edgePosition.cx} yout={edgePosition.cy} mps={0}/>)
       } else {
         const edgePosition = VertexView.getEdgePosition(vertex, "out");
-        edges.push(<EdgeView key={0} xin={edgePosition.cx} yin={edgePosition.cy} xout={this.state.mouse.x} yout={this.state.mouse.y} />)
+        edges.push(<EdgeView key={0} xin={edgePosition.cx} yin={edgePosition.cy} xout={this.state.mouse.x} yout={this.state.mouse.y} mps={0}/>)
       }
     }
 
@@ -129,8 +130,16 @@ export class GraphView extends React.Component<GraphProps, GraphState> {
 
 function EdgeView(props: any) {
   const radius = 5;
-  const duration = 2;
-  const numCircles = 2;
+  let duration;
+  let numCircles;
+  if (props.mps === 0) {
+    duration = 0;
+    numCircles = 0;
+  } else {
+    const rate = Math.floor(Math.log2(props.mps + 1) + 1);
+    duration = 5 / rate;
+    numCircles = 2;
+  }
 
   const circles = [];
   for (let i = 0; i < numCircles; i++) {

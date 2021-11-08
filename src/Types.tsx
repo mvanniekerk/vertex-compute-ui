@@ -4,6 +4,7 @@ export type Vertex = {
   code : string,
   x : number,
   y : number,
+  mps : number,
 }
 
 export type Vertices = Record<string, Vertex>
