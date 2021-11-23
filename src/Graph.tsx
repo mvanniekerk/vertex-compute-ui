@@ -137,7 +137,7 @@ function EdgeView(props: any) {
     numCircles = 0;
   } else {
     const rate = Math.floor(Math.log2(props.mps + 1) + 1);
-    duration = 5 / rate;
+    duration = 5.0 / rate;
     numCircles = 2;
   }
 

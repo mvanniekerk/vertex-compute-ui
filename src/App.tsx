@@ -7,6 +7,21 @@ import { Graph, LogMessage, Vertices, Vertex } from './Types';
 
 const HOST = "http://localhost:8080";
 
+/*
+  /graph - GET the graph
+  /graph - POST load a graph
+
+  /graph/vertex - POST create a vertex (returns ID)
+  /graph/vertex/{id} - DELETE a vertex
+  /graph/vertex/{id}/code - POST update the source code
+  /graph/vertex/{id}/name - POST update the name
+  /graph/edge - POST create an edge
+
+  /send/{name} - POST a message to a vertex
+  /sendws - open a WS connection for sending messages directly to vertices
+  /ws - open a WS connection for subscribing to log messages and metrics
+*/
+
 type State = Graph & {
   selectedVertex: string | undefined,
   log: LogMessage[],
@@ -47,10 +62,9 @@ class App extends React.Component<{}, State> {
         this.setState({ vertices : vertices });
       }
     };
-    fetch(HOST + "/state")
+    fetch(HOST + "/graph")
       .then(response => response.json())
       .then(body => {
-        console.log(body);
         const vertices: any = {};
         for (const vertex of body.vertices) {
           vertices[vertex.id] = { ...vertex, x: 100, y: 100 };
@@ -60,7 +74,7 @@ class App extends React.Component<{}, State> {
   }
 
   save() {
-    fetch(HOST + "/state")
+    fetch(HOST + "/graph")
       .then(response => response.text())
       .then(body => {
         const element = document.createElement("a");
@@ -76,7 +90,7 @@ class App extends React.Component<{}, State> {
     const file: File = event.target.files[0];
     const fr = new FileReader();
     fr.onload = (evt: any) => {
-      fetch(HOST + "/load", {
+      fetch(HOST + "/graph", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -97,8 +111,8 @@ class App extends React.Component<{}, State> {
   }
 
   addVertex() {
-    const code = "NumberSource";
-    fetch(HOST + "/createvertex", {
+    const code = "Logger";
+    fetch(HOST + "/graph/vertex", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
@@ -117,7 +131,7 @@ class App extends React.Component<{}, State> {
   }
 
   addEdge(from: string, to: string) {
-    fetch(HOST + "/link", {
+    fetch(`${HOST}/graph/edge`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -134,7 +148,7 @@ class App extends React.Component<{}, State> {
 
   changeName(newName: string) {
     const id = this.state.selectedVertex;
-    fetch(HOST + "/name/" + id, {
+    fetch(`${HOST}/graph/vertex/${id}/name`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -151,7 +165,7 @@ class App extends React.Component<{}, State> {
 
   changeCode(newCode: string) {
     const id = this.state.selectedVertex;
-    fetch(HOST + "/code/" + id, {
+    fetch(`${HOST}/graph/vertex/${id}/code`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -187,13 +201,8 @@ class App extends React.Component<{}, State> {
     if (!id) {
       return;
     }
-    const vertex = this.state.vertices[id];
-    fetch(HOST + "/stopvertex", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ id : id, name : vertex.name })
+    fetch(`${HOST}/graph/vertex/${id}`, {
+      method: "DELETE"
     })
       .then(response => {
         if (response.ok) {
